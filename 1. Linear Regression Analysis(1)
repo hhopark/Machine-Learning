@@ -1,0 +1,45 @@
+"""
+출처: https://wikidocs.net/21670
+
+단순회기분석을 위해 다음과 같은 예제를 살펴보자.
+----------------------------------------
+공부시간에 따라(독립변수) 시험성적(종속변수)이 변화한다.
+'tensorflow'를 이용하여 공부시간에 따른 시험성적을 예측하는 모델을 구상하라.
+경사하강법을 사용하고, 9.5시간을 공부했을때 예측되는 시험성적을 산출하라.
+
+공부시간 : 1,2,3,4,5,6,7,8,9
+시험성적 : 11,22,33,44,55,66,77,87,95
+----------------------------------------
+"""
+
+"""
+Solution
+1. 회귀분석을 위해 모델을 만들어야한다. 9.5시간에 시험성적은 제공되지 않았으므로,
+높은 정확도로 독립변수인 공부시간에 따른 시험성적을 예측할 수 있는 모델이 되어야한다.
+2. 선형회귀함수를 찾아 오차값이 가장 작은 모델을 선택해야한다. 이때 오차값을 줄일 수 있는 방법으로
+'경사하강법'을 사용한다. 경사하강법을 사용하기위한 손실함수(비용함수)는 평균제곱오차를 이용한다.
+(경사하강법은 손실함수의 값을 최소로 만들수 있도록 도와준다)
+"""
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import optimizers
+import numpy as np
+
+X = np.array([1,2,3,4,5,6,7,8,9]) # 공부하는 시간
+Y = np.array([11,22,33,44,55,66,77,87,95]) # 각 공부하는 시간에 맵핑되는 성적
+
+#Sequential > 잇따라 일어나는
+#Dense > 밀집도
+model=Sequential() # Sequential로 model이라는 이름의 모델 만들기
+model.add(Dense(1, input_dim=1, activation='linear')) # Dense(출력의 차원, imput_dim=입력의 차원, activation='사용하는 함수')
+                                                      # 독립변수(입력), 종속변수(출력)가 각각 1개인 단순선형회기, activation을 linear로 설정하면 선형회기
+sgd = optimizers.SGD(lr=0.01) #sgd는 경사하강법을 의미하며 학습률을 0.01로 지정
+model.compile(optimizer=sgd, loss='mse', metrics=['mse']) #손실함수(비용함수)는 mse를 사용한다
+model.fit(X, Y, batch_size=1, epochs=300, shuffle=False) #주어진 X와 Y데이터에 대해서 오차를 최소화하는 작업을 300번 시도한다.
+#batch_size sample의 몇번째부터 fitting 할 것인지.
+import matplotlib.pyplot as plt
+plt.plot(X, model.predict(X),'b', X,Y ,'k.') #plt.plot(X값, Y값, '색', 다른X값, 다른Y값, 'k. > 점으로')
+plt.show()
+
+print(model.predict([9.5]))
