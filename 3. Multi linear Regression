@@ -1,0 +1,30 @@
+"""
+독립변수가 2개 이상인 경우는 모델을 직접 코딩하는 관점에서 입력 벡터의 차원이
+2개 이상이라고 할 수 있다. y를 결정하는데 있어 독립 변수가 3개인 선형 회귀를 풀어 본다면 다음과 같다.
+중간 고사, 기말 고사, 그리고 추가 점수를 어떤 공식을 통해 최종 점수를 계산한 데이터가 있다.
+
+midterm : 70, 71, 50, 99, 50, 20, 40
+final   : 85, 89, 80, 20, 10, 99, 50
+added   : 11, 18, 20, 10, 10, 10, 20
+score   : 73, 82, 72, 57, 34, 58, 56
+"""
+
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import optimizers
+
+# 상위 5개의 데이터만 훈련에 사용하고, 2개는 테스트에 사용한다면
+X = np.array([[70, 85, 11], [71,89,18], [50,80,20], [99,20,10], [50,10,10]])
+# 입력 벡터의 차원은 3이므로 input_dim = 3
+y = np.array([73,82,72,57,34])
+# 출력 벡터의 차원은 1이므로 output_dim = 1
+
+model = Sequential()
+model.add(Dense(1, input_dim=3, activation='linear'))
+sgd = optimizers.SGD(lr=0.00001)
+model.compile(optimizer=sgd, loss='mse', metrics=['mse'])
+model.fit(X,y, batch_size=1, epochs=2000, shuffle=False)
+
+X_test = np.array([[20,99,10], [40,50,20]]) # 이미 알고있는 score(58점과 56점)을 예측해보면
+print(model.predict(X_test))
