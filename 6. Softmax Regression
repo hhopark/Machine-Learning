@@ -1,0 +1,103 @@
+"""
+이진 분류가 두 개의 선택지 중 하나를 고르는 문제였다면, 세 개 이상의 선택지 중 하나를
+고르는 문제를 다중 클래스 분류라고 한다.
+다음의 문제는 꽃받침 길이, 꽃받침 넓이, 꽃받침 길이, 꽃잎 넓이로부터 3개의 품종 중 어떤 품종인지를
+예측하는 문제로 전형적인 다중 클래스 분류 문제이다.
+
+이번에는 세 개 이상의 정답지 중에서 고르는 문제이다. 여기다가 앞서 배운 시그모이드 함수를
+사용해본다고 하면, 입력된 샘플 데이터에 대해서 각 정답지에 대한 시그모이드 함수를 적용해 볼 수 있다.
+만약 그렇게 한다면, 첫번째가 정답일 확률 0.7, 두번째가 정답일 확률은 0.6, 세번째가 정답일 확률은 0.4 등과
+같은 출력을 얻게 된다. 그런데 이 전체 확률의 합계가 1이 되도록 하여 전체 정답지에 걸친 확률로 바꿀순 없을까?
+
+***
+만약 하나의 샘플 데이터에 대한 예측값으로 모든 가능한 정답지에 대한 정답일 확률의 합이 1이 되도록 구할 수 있다면?
+위 문제에서 3개 중 하나의 정답을 골라야 하는데 이 샘플 데이터가 각 품종일 확률의 합이 1인 확률 분포를 구할 수 있도록 해보자
+이럴때 사용하는 것이 '소프트맥스 함수'이다.
+***
+"""
+"""
+Softmax fuction
+소프트맥스 함수는 분류해야하는 정답지(class)의 총 개수를 k라고 할 때, k차원의 벡터를 입력받아 각 클래스에
+대한 확률을 추정한다. 
+
+k차원의 벡터에서 i번째 원소를 zi, i번째 클래스가 정답일 확률을 pi로 나타낸다고 하면
+위 문제에서는 k=3인 경우이므로 3차원 벡터 z [z1, z2, z3]의 입력을 받으면 소프트맥스 함수는 p1, p2, p3를 출력해준다.
+
+위와 같은 문제에는 두 가지 질문이 있다. 
+첫번째는 소프트맥스 함수의 입력에 대한 질문이다. 하나의 샘플데이터는 4개의 독립변수 x를 가지는데
+이는 모델이 4차원 벡터를 입력으로 받음을 의미한다. 그런데 소프트맥스의 함수 입력값이 3차원 벡터이므로 변환해야만 한다.
+
+소프트맥스 함수의 입력 벡터 z의 차원수만큼 결과값이 나오도록 가중치 곱을 진행하면된다.
+현 상황에서 입력 벡터z의 차원은 3이고, 4개의 독립변수가 있으므로, 
+W(3x4)행렬의 가중치 곱을 진행하면
+W(3x4)행렬 x X(4x1)행렬 + b(3x1)행렬 = 에측값이 된다.
+--------------------->학습 과정에서 점차적으로 오차를 최소화하는 가중치로 값이 변경된다.
+오차를 계산함에 있어 원-핫 벡터를 사용하는 것이 올바르다.
+{red, green, blue}와 같이 3개의 클래스를 각각 0,1,2로 하고 mse를 사용한다면 가중치가 클래스마다
+균등하게 배분되지 않는다.
+따라서 (1,0,0) (0,1,0) (0,0,1)로 두어 균등한 가중치를 받을 수 있도록 유도한다.
+"""
+
+# iris.csv 데이터 4개의 독립변수와 3개의 클래스를 이용하여 적절한 품종을 찾아내는 문제풀이
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+data = pd.read_csv(r'C:\Users\YONG\Desktop\iris.csv', encoding='latin1')
+#print(len(data))
+#print(data[:5])
+#print("품종 종류:", data['variety'].unique(), sep="\n") # ,data['variety'].unique 중복을 제거한 품종 print
+"""
+품종 종류:
+['Setosa' 'Versicolor' 'Virginica']
+"""
+#del data['ID']
+#sns.set(style="ticks", color_codes=True)
+#g = sns.pairplot(data, hue="variety", palette="husl") #pairplot은 데이터프레임을 인수로 받아 데이터프레임의 각 열의 조합에 따라서 산점도를 그린다.
+#sns.barplot(data['variety'], data['sepal.width'], ci=None)
+#data['variety'].value_counts().plot(kind='bar')
+#plt.show()
+
+#print(len(data['variety']))
+data['variety'] = data['variety'].replace(['Virginica','Setosa','Versicolor'],[0,1,2])
+#data['variety'].value_counts().plot(kind='bar')
+#plt.show()
+
+from sklearn.model_selection import train_test_split
+data_X = data[['sepal.length','sepal.width','petal.length','petal.width']].values
+#sepal.length  sepal.width  petal.length  petal.width variety
+data_y = data['variety'].values
+
+#print(data_X[:5])
+#print(data_y[:5])
+
+(X_train, X_test, y_train, y_test) = train_test_split(data_X, data_y, train_size=0.8, random_state=1)
+# 훈련 데이터와 테스트 데이터를 8:2로 나눈다. 또한 데이터 순서를 섞는다.
+from tensorflow.keras.utils import to_categorical
+y_train = to_categorical(y_train)
+y_test = to_categorical(y_test)
+# 훈련 데이터와 테스트 데이터에 대해 원 핫 인코딩을 진행한다.
+
+#print(y_train[:5])
+#print(y_test[:5])
+
+"""
+위 코드로 전처리가 마무리 됨.
+소프트맥스 회귀를 통한 분류기를 만들어보자.
+"""
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import optimizers
+
+model = Sequential()
+model.add(Dense(3, input_dim=4, activation='softmax'))
+sgd = optimizers.SGD(lr=0.01)
+model.compile(loss= 'categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+# 다중 클래스 분류 문제에서는 'categorical_crossentropy'를 기재해주어야한다.
+history = model.fit(X_train, y_train, batch_size=1, epochs=200, validation_data=(X_test, y_test))
+
+epochs = range(1, len(history.history['accuracy'])+1)
+plt.plot(epochs, history.history['loss'])
+plt.plot(epochs, history.history['val_loss'])
+#plt.show()
+print("\n 테스트 정확도: %.4f" % (model.evaluate(X_test, y_test)[1]))
